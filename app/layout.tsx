@@ -26,8 +26,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Open Lovable v2",
-  description: "Re-imagine any website in seconds with AI-powered website builder.",
+  title: "BX3: BOOS Builder Bot",
+  description: "Build amazing websites with AI in seconds using BX3 BOOS Builder Bot.",
 };
 
 export default function RootLayout({
@@ -36,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${robotoMono.variable} font-sans`}>
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${robotoMono.variable} font-sans dark bg-slate-950 text-white`}>
         {children}
       </body>
     </html>

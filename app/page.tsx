@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { appConfig } from '@/config/app.config';
 import { toast } from "sonner";
+import { ParticleTextEffect } from "@/components/ui/particle-text-effect";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { SplineSceneBasic } from "@/components/SplineSceneBasic";
 
 // Import shared components
 import { Connector } from "@/components/shared/layout/curvy-rect";
@@ -22,11 +25,8 @@ import HeroInputSubmitButton from "@/components/app/(home)/sections/hero-input/B
 // import Globe from "@/components/app/(home)/sections/hero-input/_svg/Globe";
 
 // Import header components
-import HeaderBrandKit from "@/components/shared/header/BrandKit/BrandKit";
 import HeaderWrapper from "@/components/shared/header/Wrapper/Wrapper";
 import HeaderDropdownWrapper from "@/components/shared/header/Dropdown/Wrapper/Wrapper";
-import GithubIcon from "@/components/shared/header/Github/_svg/GithubIcon";
-import ButtonUI from "@/components/ui/shadcn/button"
 
 interface SearchResult {
   url: string;
@@ -214,19 +214,12 @@ export default function HomePage() {
           <HeaderWrapper>
             <div className="max-w-[900px] mx-auto w-full flex justify-between items-center">
               <div className="flex gap-24 items-center">
-                <HeaderBrandKit />
-              </div>
-              <div className="flex gap-8">
-                <a
-                  className="contents"
-                  href="https://github.com/mendableai/open-lovable"
-                  target="_blank"
-                >
-                  <ButtonUI variant="tertiary">
-                    <GithubIcon />
-                    Use this Template
-                  </ButtonUI>
-                </a>
+                <Link href="/" className="flex items-center gap-3">
+                  <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                    BX3
+                  </div>
+                  <span className="text-sm font-medium text-text-secondary">AI Lab</span>
+                </Link>
               </div>
             </div>
           </HeaderWrapper>
@@ -246,13 +239,11 @@ export default function HomePage() {
               <p className="text-center text-body-large">
                 Re-imagine any website, in seconds.
               </p>
-              <Link
-                className="bg-black-alpha-4 hover:bg-black-alpha-6 rounded-6 px-8 lg:px-6 text-label-large h-30 lg:h-24 block mt-8 mx-auto w-max gap-4 transition-all"
-                href="#"
-                onClick={(e) => e.preventDefault()}
+              <div
+                className="bg-black-alpha-4 hover:bg-black-alpha-6 rounded-6 px-8 lg:px-6 text-label-large h-30 lg:h-24 flex items-center justify-center mx-auto gap-4 transition-all"
               >
-                Powered by Firecrawl.
-              </Link>
+                Powered by BX3 AI Lab
+              </div>
             </div>
           </div>
 
@@ -751,6 +742,26 @@ export default function HomePage() {
             )}
           </section>
         )}
+
+        {/* ParticleTextEffect Section */}
+        <section className="w-full py-20 bg-black">
+          <ParticleTextEffect words={["BX3", "BOOS BOT BUILDER"]} />
+        </section>
+
+        {/* AuroraBackground Section */}
+        <section className="w-full py-20">
+          <AuroraBackground showRadialGradient={true}>
+            <div className="text-center text-white z-20 relative">
+              <h1 className="text-5xl font-bold mb-4">Aurora Background</h1>
+              <p className="text-lg opacity-80">Animated gradient lights with parallax</p>
+            </div>
+          </AuroraBackground>
+        </section>
+
+        {/* SplineSceneBasic Section */}
+        <section className="w-full py-20 bg-black">
+          <SplineSceneBasic />
+        </section>
 
       </div>
 

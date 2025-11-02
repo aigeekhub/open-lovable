@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { appConfig } from '@/config/app.config';
 import HeroInput from '@/components/HeroInput';
 import SidebarInput from '@/components/app/generation/SidebarInput';
-import HeaderBrandKit from '@/components/shared/header/BrandKit/BrandKit';
 import { HeaderProvider } from '@/components/shared/header/HeaderContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -3074,7 +3074,12 @@ Focus on the key sections and content, making it clean and modern.`;
     <HeaderProvider>
       <div className="font-sans bg-background text-foreground h-screen flex flex-col">
       <div className="bg-white py-[15px] py-[8px] border-b border-border-faint flex items-center justify-between shadow-sm">
-        <HeaderBrandKit />
+        <Link href="/" className="flex items-center gap-3 px-4">
+          <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+            BX3
+          </div>
+          <span className="text-sm font-medium text-gray-600">AI Lab</span>
+        </Link>
         <div className="flex items-center gap-2">
           {/* Model Selector - Left side */}
           <select

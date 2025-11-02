@@ -50,32 +50,28 @@ export const appConfig = {
   
   // AI Model Configuration
   ai: {
-    // Default AI model
-    defaultModel: 'moonshotai/kimi-k2-instruct-0905',
+    // Default AI model (OpenRouter model ID)
+    defaultModel: 'anthropic/claude-3.5-sonnet',
     
-    // Available models
+    // Available models (OpenRouter model IDs)
     availableModels: [
-      'openai/gpt-5',
-      'moonshotai/kimi-k2-instruct-0905',
-      'anthropic/claude-sonnet-4-20250514',
-      'google/gemini-2.0-flash-exp'
+      'anthropic/claude-3.5-sonnet',
+      'openai/gpt-4o',
+      'google/gemini-2.0-flash-exp:free',
+      'meta-llama/llama-3.3-70b-instruct',
+      'qwen/qwen-2.5-72b-instruct',
+      'deepseek/deepseek-chat'
     ],
     
     // Model display names
     modelDisplayNames: {
-      'openai/gpt-5': 'GPT-5',
-      'moonshotai/kimi-k2-instruct-0905': 'Kimi K2 (Groq)',
-      'anthropic/claude-sonnet-4-20250514': 'Sonnet 4',
-      'google/gemini-2.0-flash-exp': 'Gemini 2.0 Flash (Experimental)'
+      'anthropic/claude-3.5-sonnet': 'Claude 3.5 Sonnet',
+      'openai/gpt-4o': 'GPT-4o',
+      'google/gemini-2.0-flash-exp:free': 'Gemini 2.0 Flash (Free)',
+      'meta-llama/llama-3.3-70b-instruct': 'Llama 3.3 70B',
+      'qwen/qwen-2.5-72b-instruct': 'Qwen 2.5 72B',
+      'deepseek/deepseek-chat': 'DeepSeek Chat'
     } as Record<string, string>,
-    
-    // Model API configuration
-    modelApiConfig: {
-      'moonshotai/kimi-k2-instruct-0905': {
-        provider: 'groq',
-        model: 'moonshotai/kimi-k2-instruct-0905'
-      }
-    },
     
     // Temperature settings for non-reasoning models
     defaultTemperature: 0.7,

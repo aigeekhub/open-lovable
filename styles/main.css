@@ -57,36 +57,36 @@
     --radius: 0.5rem;
   }
 
-  /* Temporarily disable dark mode until we migrate to semantic colors */
-  /* .dark {
-    --background: 240 10% 3.9%;
+  /* Dark mode enabled */
+  .dark {
+    --background: 2 8% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 12 8% 12%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
+    --popover: 12 8% 12%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary-foreground: 2 8% 6%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 240 3.7% 25.9%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
+    --muted: 240 3.7% 25.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 179 83% 41%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  } */
+    --border: 12 8% 20%;
+    --input: 12 8% 18%;
+    --ring: 179 100% 40%;
+  }
 }
 
 @layer utilities {
@@ -279,4 +279,92 @@ input[type="text"]:focus-visible {
   outline: none !important;
   box-shadow: none !important;
   border-color: inherit !important;
+}
+
+/* BX3 Custom Animations and Effects */
+@keyframes bx3-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(34, 211, 238, 0.3), 0 0 10px rgba(34, 211, 238, 0.2), 0 0 15px rgba(34, 211, 238, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.3), 0 0 30px rgba(34, 211, 238, 0.2);
+  }
+}
+
+@keyframes bx3-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes bx3-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bx3-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.bx3-glow {
+  animation: bx3-glow 3s ease-in-out infinite;
+}
+
+.bx3-pulse {
+  animation: bx3-pulse 2s ease-in-out infinite;
+}
+
+.bx3-float {
+  animation: bx3-float 3s ease-in-out infinite;
+}
+
+.bx3-gradient {
+  background: linear-gradient(-45deg, #06b6d4, #3b82f6, #8b5cf6, #06b6d4);
+  background-size: 400% 400%;
+  animation: bx3-gradient 4s ease infinite;
+}
+
+/* Enhanced hover effects */
+.bx3-hover-scale:hover {
+  transform: scale(1.05) rotate(0.5deg);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bx3-hover-glow:hover {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.4);
+  transition: all 0.3s ease;
+}
+
+.bx3-hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 25px rgba(34, 211, 238, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Dark mode specific styles */
+body.dark {
+  background: radial-gradient(ellipse at center, rgb(15, 23, 42) 0%, rgb(2, 8, 23) 100%);
+}
+
+/* Card hover effects for dark mode */
+.dark .card-hover:hover {
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
