@@ -6,12 +6,14 @@ interface SpotlightProps {
   className?: string;
   size?: number;
   intensity?: number;
+  children?: React.ReactNode;
 }
 
 export const Spotlight: React.FC<SpotlightProps> = ({ 
   className = '', 
   size = 300,
-  intensity = 0.8 
+  intensity = 0.8,
+  children
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -68,6 +70,10 @@ export const Spotlight: React.FC<SpotlightProps> = ({
       <div className="absolute inset-0 opacity-20" style={{
         background: 'radial-gradient(circle at 80% 80%, rgba(100, 150, 255, 0.1), transparent 50%)',
       }} />
+      {/* Render children on top */}
+      <div className="relative z-20 w-full h-full">
+        {children}
+      </div>
     </div>
   );
 };
