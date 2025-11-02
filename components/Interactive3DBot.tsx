@@ -63,9 +63,9 @@ export const Interactive3DBot: React.FC<Interactive3DBotProps> = ({ className = 
               transform: 'translateZ(64px)',
               backfaceVisibility: 'hidden',
             }}
-            className="absolute w-full h-full bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg opacity-90 flex items-center justify-center border border-cyan-300"
+            className="absolute w-full h-full bg-gradient-to-br from-cyan-400 to-blue-400 rounded-lg flex items-center justify-center border-2 border-cyan-200 shadow-lg shadow-cyan-500/50"
           >
-            <div className="text-2xl font-bold text-white">AI</div>
+            <div className="text-3xl font-bold text-white drop-shadow-lg">AI</div>
           </div>
 
           {/* Back face */}
@@ -74,9 +74,9 @@ export const Interactive3DBot: React.FC<Interactive3DBotProps> = ({ className = 
               transform: 'rotateY(180deg) translateZ(64px)',
               backfaceVisibility: 'hidden',
             }}
-            className="absolute w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg opacity-90 flex items-center justify-center border border-pink-300"
+            className="absolute w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center border-2 border-purple-200 shadow-lg shadow-purple-500/50"
           >
-            <div className="text-2xl font-bold text-white">BOT</div>
+            <div className="text-2xl font-bold text-white drop-shadow-lg">BOT</div>
           </div>
 
           {/* Right face */}
@@ -125,8 +125,9 @@ export const Interactive3DBot: React.FC<Interactive3DBotProps> = ({ className = 
         </div>
 
         {/* Glow effect around bot */}
-        <div className="absolute inset-0 -m-4 rounded-full border-2 border-cyan-400 opacity-30 animate-pulse" />
-        <div className="absolute inset-0 -m-8 rounded-full border border-blue-400 opacity-20" />
+        <div className="absolute inset-0 -m-4 rounded-full border-2 border-cyan-300 opacity-70 animate-pulse shadow-lg shadow-cyan-400/60" />
+        <div className="absolute inset-0 -m-8 rounded-full border border-blue-300 opacity-50 shadow-lg shadow-blue-400/40" />
+        <div className="absolute inset-0 -m-12 rounded-full bg-gradient-to-r from-cyan-400/20 to-blue-400/20 blur-sm" />
       </div>
 
       {/* Light source indicator following mouse */}

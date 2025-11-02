@@ -36,10 +36,10 @@ export const InteractiveHeroSection: React.FC<InteractiveHeroSectionProps> = ({
     >
       <div
         ref={heroRef}
-        className="relative w-full h-screen flex items-center justify-between px-8 lg:px-16"
+        className="relative z-10 w-full h-screen flex items-center justify-between px-8 lg:px-16"
       >
         {/* Left side - URL Input */}
-        <div className="flex-1 max-w-xl z-10">
+        <div className="flex-1 max-w-xl z-20 relative">
           <div className="space-y-4">
             <div className="flex gap-2">
               <input
@@ -49,23 +49,23 @@ export const InteractiveHeroSection: React.FC<InteractiveHeroSectionProps> = ({
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-white/10 border border-cyan-300/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-2 border-cyan-400/70 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:border-cyan-300 focus:bg-cyan-900/60 transition-all shadow-lg shadow-cyan-500/20"
               />
               <button
                 onClick={handleSubmit}
                 disabled={isLoading || !url.trim()}
-                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold rounded-lg transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-500/50 hover:shadow-cyan-500/70"
               >
-                {isLoading ? 'Processing...' : 'Go'}
+                {isLoading ? '...' : 'GO'}
               </button>
             </div>
           </div>
         </div>
 
         {/* Right side - 3D Bot with Spotlight */}
-        <div className="flex-1 flex items-center justify-center relative">
-          <div className="absolute inset-0 bg-gradient-to-l from-cyan-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-          <Interactive3DBot className="relative z-5" />
+        <div className="flex-1 flex items-center justify-center relative z-20">
+          <div className="absolute inset-0 bg-gradient-to-l from-cyan-500/20 to-transparent opacity-100 transition-opacity duration-300" />
+          <Interactive3DBot className="relative z-10" />
         </div>
 
         {/* Decorative elements */}

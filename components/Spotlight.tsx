@@ -46,19 +46,28 @@ export const Spotlight: React.FC<SpotlightProps> = ({
     <div
       ref={containerRef}
       className={`relative overflow-hidden ${className}`}
+      style={{ background: 'linear-gradient(135deg, #0a0e27 0%, #1a1a2e 50%, #0f0f23 100%)' }}
     >
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: `radial-gradient(
             circle ${size}px at ${spotlightPos.x}px ${spotlightPos.y}px,
-            rgba(255, 255, 255, ${intensity * 0.3}),
-            rgba(255, 255, 255, ${intensity * 0.15}) 40%,
-            rgba(255, 255, 255, 0) 100%
+            rgba(0, 255, 255, ${intensity * 0.4}),
+            rgba(0, 150, 255, ${intensity * 0.2}) 40%,
+            rgba(0, 100, 200, 0) 100%
           )`,
           transition: 'background 0.05s ease-out',
+          mixBlendMode: 'screen',
         }}
       />
+      {/* Background glow elements */}
+      <div className="absolute inset-0 opacity-30" style={{
+        background: 'radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1), transparent 50%)',
+      }} />
+      <div className="absolute inset-0 opacity-20" style={{
+        background: 'radial-gradient(circle at 80% 80%, rgba(100, 150, 255, 0.1), transparent 50%)',
+      }} />
     </div>
   );
 };
