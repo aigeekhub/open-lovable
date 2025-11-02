@@ -3,8 +3,6 @@
 import React, { useRef, useState } from 'react';
 import { Spotlight } from './Spotlight';
 import { Interactive3DBot } from './Interactive3DBot';
-import { Input } from './ui/shadcn/input';
-import { Button } from './ui/shadcn/button';
 
 interface InteractiveHeroSectionProps {
   onSubmit?: (url: string) => void;
@@ -24,7 +22,7 @@ export const InteractiveHeroSection: React.FC<InteractiveHeroSectionProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !isLoading) {
       handleSubmit();
     }
@@ -44,22 +42,22 @@ export const InteractiveHeroSection: React.FC<InteractiveHeroSectionProps> = ({
         <div className="flex-1 max-w-xl z-10">
           <div className="space-y-4">
             <div className="flex gap-2">
-              <Input
+              <input
                 type="text"
                 placeholder="Enter URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 bg-white/10 border border-cyan-300/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors"
+                className="flex-1 px-4 py-3 bg-white/10 border border-cyan-300/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 transition-colors disabled:opacity-50"
               />
-              <Button
+              <button
                 onClick={handleSubmit}
                 disabled={isLoading || !url.trim()}
-                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? 'Processing...' : 'Go'}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

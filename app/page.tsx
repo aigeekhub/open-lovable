@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { appConfig } from '@/config/app';
+import { appConfig } from '@/config/app.config';
 import { InteractiveHeroSection } from '@/components/InteractiveHeroSection';
 
 interface SearchResult {
