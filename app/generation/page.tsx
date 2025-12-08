@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { appConfig } from '@/config/app.config';
 import HeroInput from '@/components/HeroInput';
 import SidebarInput from '@/components/app/generation/SidebarInput';
@@ -41,7 +42,22 @@ interface ChatMessage {
     generatedCode?: string;
     appliedFiles?: string[];
     commandType?: 'input' | 'output' | 'error' | 'success';
+    brandingData?: any;
+    sourceUrl?: string;
   };
+}
+
+interface ScrapeData {
+  success: boolean;
+  content?: string;
+  url?: string;
+  title?: string;
+  source?: string;
+  screenshot?: string;
+  structured?: any;
+  metadata?: any;
+  message?: string;
+  error?: string;
 }
 
 function AISandboxPage() {
@@ -86,6 +102,7 @@ function AISandboxPage() {
   const [isPreparingDesign, setIsPreparingDesign] = useState(false);
   const [targetUrl, setTargetUrl] = useState<string>('');
   const [sidebarScrolled, setSidebarScrolled] = useState(false);
+  const [screenshotCollapsed, setScreenshotCollapsed] = useState(false);
   const [loadingStage, setLoadingStage] = useState<'gathering' | 'planning' | 'generating' | null>(null);
   const [isStartingNewGeneration, setIsStartingNewGeneration] = useState(false);
   const [sandboxFiles, setSandboxFiles] = useState<Record<string, string>>({});
@@ -331,7 +348,9 @@ function AISandboxPage() {
 
   useEffect(() => {
     // Only check sandbox status on mount if we don't already have sandboxData
-    if (!sandboxData) {
+    // AND we're not auto-starting a new generation (which would create a new sandbox)
+    const autoStart = sessionStorage.getItem('autoStart');
+    if (!sandboxData && autoStart !== 'true') {
       checkSandboxStatus();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1329,9 +1348,9 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
                         <div className="mb-8 relative">
-                          <div className="w-24 h-24 mx-auto">
-                            <div className="absolute inset-0 border-4 border-gray-800 rounded-full"></div>
-                            <div className="absolute inset-0 border-4 border-green-500 rounded-full animate-spin border-t-transparent"></div>
+                          <div className="w-48 h-48 mx-auto">
+                            <div className="absolute inset-0 border-8 border-gray-800 rounded-full"></div>
+                            <div className="absolute inset-0 border-8 border-green-500 rounded-full animate-spin border-t-transparent"></div>
                           </div>
                         </div>
                         <h3 className="text-xl font-medium text-white mb-2">AI is analyzing your request</h3>
@@ -1342,7 +1361,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     <div className="bg-black border border-gray-200 rounded-lg overflow-hidden">
                       <div className="px-4 py-2 bg-gray-100 text-gray-900 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-16 h-16 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
                           <span className="font-mono text-sm">Streaming code...</span>
                         </div>
                       </div>
@@ -1371,7 +1390,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                       <div className="bg-black border-2 border-gray-400 rounded-lg overflow-hidden shadow-sm">
                         <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <div className="w-16 h-16 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             <span className="font-mono text-sm">{generationProgress.currentFile.path}</span>
                             <span className={`px-2 py-0.5 text-xs rounded ${
                               generationProgress.currentFile.type === 'css' ? 'bg-blue-600 text-white' :
@@ -1453,7 +1472,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                       <div className="bg-black border border-gray-200 rounded-lg overflow-hidden">
                         <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-16 h-16 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                             <span className="font-mono text-sm">Processing...</span>
                           </div>
                         </div>
@@ -1478,9 +1497,10 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                               
                               // Remove explanation tags and content
                               remainingContent = remainingContent.replace(/<explanation>[\s\S]*?<\/explanation>/g, '').trim();
-                              
-                              // If only whitespace or nothing left, show waiting message
-                              return remainingContent || 'Waiting for next file...';
+
+                              // If only whitespace or nothing left, show loading message
+                              // Use "Loading sandbox..." instead of "Waiting for next file..." for better UX
+                              return remainingContent || 'Loading sandbox...';
                             })()}
                           </SyntaxHighlighter>
                         </div>
@@ -1547,9 +1567,6 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     <div className="h-2 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded animate-pulse w-3/5 mx-auto" 
                          style={{ animationDuration: '1.5s', animationDelay: '0.4s' }} />
                   </div>
-                  
-                  {/* Spinner */}
-                  <div className="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
                   
                   {/* Status text */}
                   <p className="text-white text-lg font-medium">
@@ -1685,7 +1702,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             </div>
           ) : sandboxData ? (
             <div className="text-gray-500">
-              <div className="w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="w-16 h-16 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <p className="text-sm">Loading preview...</p>
             </div>
           ) : (
@@ -2629,7 +2646,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     // Set loading background to ensure proper visual feedback
     setShowLoadingBackground(true);
     
-    // Clear messages and immediately show the cloning message
+    // Clear messages and immediately show the initial message
     setChatMessages([]);
     let displayUrl = homeUrlInput.trim();
     if (!displayUrl.match(/^https?:\/\//i)) {
@@ -2637,7 +2654,16 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     }
     // Remove protocol for cleaner display
     const cleanUrl = displayUrl.replace(/^https?:\/\//i, '');
-    addChatMessage(`Starting to clone ${cleanUrl}...`, 'system');
+
+    // Check if we're in brand extension mode
+    const brandExtensionMode = sessionStorage.getItem('brandExtensionMode') === 'true';
+
+    addChatMessage(
+      brandExtensionMode
+        ? `Analyzing brand from ${cleanUrl}...`
+        : `Starting to clone ${cleanUrl}...`,
+      'system'
+    );
     
     // Start creating sandbox and capturing screenshot immediately in parallel
     const sandboxPromise = !sandboxData ? createSandbox(true) : Promise.resolve(null);
@@ -2661,7 +2687,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       }, 1000);
       
       // Wait for sandbox to be ready (if it's still creating)
-      await sandboxPromise;
+      const createdSandbox = await sandboxPromise;
       
       // Now start the clone process which will stream the generation
       setUrlInput(homeUrlInput);
@@ -2674,13 +2700,55 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         if (!url.match(/^https?:\/\//i)) {
           url = 'https://' + url;
         }
-        
+
+        // Check if we're in brand extension mode
+        const brandExtensionMode = sessionStorage.getItem('brandExtensionMode') === 'true';
+        const brandExtensionPrompt = sessionStorage.getItem('brandExtensionPrompt') || '';
+
         // Screenshot is already being captured in parallel above
-        
-        let scrapeData;
-        
-        // Check if we have pre-scraped markdown content from search results
-        const storedMarkdown = sessionStorage.getItem('siteMarkdown');
+
+        let scrapeData: ScrapeData | undefined;
+        let brandGuidelines: any;
+
+        if (brandExtensionMode) {
+          // === BRAND EXTENSION MODE ===
+          addChatMessage('Extracting brand styles from the website...', 'system');
+
+          // Call the brand extraction endpoint
+          const extractResponse = await fetch('/api/extract-brand-styles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url,
+              prompt: brandExtensionPrompt
+            })
+          });
+
+          if (!extractResponse.ok) {
+            throw new Error('Failed to extract brand styles');
+          }
+
+          brandGuidelines = await extractResponse.json();
+
+          if (!brandGuidelines.success) {
+            throw new Error(brandGuidelines.error || 'Failed to extract brand styles');
+          }
+
+          // Display branding summary with visual UI
+          addChatMessage(`Acquired branding format from ${cleanUrl}`, 'system', {
+            brandingData: brandGuidelines.guidelines,
+            sourceUrl: cleanUrl
+          });
+          addChatMessage(`Building your custom component using these brand guidelines...`, 'system');
+
+          // Clear the flags after use
+          sessionStorage.removeItem('brandExtensionMode');
+          sessionStorage.removeItem('brandExtensionPrompt');
+
+        } else {
+          // === NORMAL CLONE MODE ===
+          // Check if we have pre-scraped markdown content from search results
+          const storedMarkdown = sessionStorage.getItem('siteMarkdown');
         if (storedMarkdown) {
           // Use the pre-scraped content
           scrapeData = {
@@ -2703,74 +2771,211 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             throw new Error('Failed to scrape website');
           }
           
-          scrapeData = await scrapeResponse.json();
+          scrapeData = await scrapeResponse.json() as ScrapeData;
           
           if (!scrapeData.success) {
             throw new Error(scrapeData.error || 'Failed to scrape website');
           }
         }
-        
-        setUrlStatus(['Website scraped successfully!', 'Generating React app...']);
-        
+        }
+
+        setUrlStatus(brandExtensionMode ? ['Brand styles extracted!', 'Building your component...'] : ['Website scraped successfully!', 'Generating React app...']);
+
         // Clear preparing design state and switch to generation tab
         setIsPreparingDesign(false);
         setIsScreenshotLoaded(false); // Reset loaded state
         setUrlScreenshot(null); // Clear screenshot when starting generation
         setTargetUrl(''); // Clear target URL
-        
+
         // Update loading stage to planning
         setLoadingStage('planning');
-        
+
         // Brief pause before switching to generation tab
         setTimeout(() => {
           setLoadingStage('generating');
           setActiveTab('generation');
         }, 1500);
-        
-        // Store scraped data in conversation context
-        setConversationContext(prev => ({
-          ...prev,
-          scrapedWebsites: [...prev.scrapedWebsites, {
-            url: url,
-            content: scrapeData,
-            timestamp: new Date()
-          }],
-          currentProject: `${url} Clone`
-        }));
-        
-        // Filter out style-related context when using screenshot/URL-based generation
-        // Only keep user's explicit instructions, not inherited styles
-        let filteredContext = homeContextInput;
-        if (homeUrlInput && homeContextInput) {
-          // Check if the context contains default style names that shouldn't be inherited
-          const stylePatterns = [
-            'Glassmorphism style design',
-            'Neumorphism style design', 
-            'Brutalism style design',
-            'Minimalist style design',
-            'Dark Mode style design',
-            'Gradient Rich style design',
-            '3D Depth style design',
-            'Retro Wave style design',
-            'Modern clean and minimalist style design',
-            'Fun colorful and playful style design',
-            'Corporate professional and sleek style design',
-            'Creative artistic and unique style design'
-          ];
-          
-          // If the context exactly matches or starts with a style pattern, filter it out
-          const startsWithStyle = stylePatterns.some(pattern => 
-            homeContextInput.trim().startsWith(pattern)
-          );
-          
-          if (startsWithStyle) {
-            // Extract only the additional instructions part after the style
-            const additionalMatch = homeContextInput.match(/\. (.+)$/);
-            filteredContext = additionalMatch ? additionalMatch[1] : '';
+
+        // Build the appropriate prompt based on mode
+        let prompt;
+
+        if (brandExtensionMode && brandGuidelines) {
+          // === BRAND EXTENSION PROMPT ===
+          // Store brand guidelines in conversation context
+          setConversationContext(prev => ({
+            ...prev,
+            scrapedWebsites: [...prev.scrapedWebsites, {
+              url: url,
+              content: { brandGuidelines },
+              timestamp: new Date()
+            }],
+            currentProject: `Custom build using ${url} brand`
+          }));
+
+          // Extract comprehensive brand data
+          const branding = brandGuidelines.guidelines;
+
+          // Build detailed brand instruction string
+          const brandInstructions = `
+BRAND GUIDELINES FROM ${url}:
+
+COLOR SYSTEM:
+- Color Scheme: ${branding.colorScheme || 'light'} mode
+- Primary Color: ${branding.colors?.primary || 'not specified'}
+- Accent Color: ${branding.colors?.accent || 'not specified'}
+- Background: ${branding.colors?.background || 'not specified'}
+- Text Primary: ${branding.colors?.textPrimary || 'not specified'}
+- Link Color: ${branding.colors?.link || 'not specified'}
+
+TYPOGRAPHY:
+- Primary Font: ${branding.typography?.fontFamilies?.primary || 'system default'}
+- Heading Font: ${branding.typography?.fontFamilies?.heading || 'system default'}
+- Font Stack (Body): ${branding.typography?.fontStacks?.body?.join(', ') || 'system-ui, sans-serif'}
+- Font Stack (Heading): ${branding.typography?.fontStacks?.heading?.join(', ') || 'system-ui, sans-serif'}
+- H1 Size: ${branding.typography?.fontSizes?.h1 || '36px'}
+- H2 Size: ${branding.typography?.fontSizes?.h2 || '30px'}
+- Body Size: ${branding.typography?.fontSizes?.body || '16px'}
+
+SPACING & LAYOUT:
+- Base Spacing Unit: ${branding.spacing?.baseUnit || '4'}px
+- Border Radius: ${branding.spacing?.borderRadius || '6px'}
+
+BUTTON STYLES:
+Primary Button:
+  - Background: ${branding.components?.buttonPrimary?.background || branding.colors?.primary}
+  - Text Color: ${branding.components?.buttonPrimary?.textColor || '#FFFFFF'}
+  - Border Radius: ${branding.components?.buttonPrimary?.borderRadius || branding.spacing?.borderRadius || '8px'}
+  - Shadow: ${branding.components?.buttonPrimary?.shadow || 'none'}
+
+Secondary Button:
+  - Background: ${branding.components?.buttonSecondary?.background || '#F9F9F9'}
+  - Text Color: ${branding.components?.buttonSecondary?.textColor || branding.colors?.textPrimary}
+  - Border Radius: ${branding.components?.buttonSecondary?.borderRadius || branding.spacing?.borderRadius || '8px'}
+  - Shadow: ${branding.components?.buttonSecondary?.shadow || 'none'}
+
+INPUT FIELDS:
+- Border Color: ${branding.components?.input?.borderColor || '#CCCCCC'}
+- Border Radius: ${branding.components?.input?.borderRadius || branding.spacing?.borderRadius || '6px'}
+
+BRAND PERSONALITY:
+- Tone: ${branding.personality?.tone || 'professional'}
+- Energy: ${branding.personality?.energy || 'medium'}
+- Target Audience: ${branding.personality?.targetAudience || 'general'}
+
+DESIGN SYSTEM:
+- Framework: ${branding.designSystem?.framework || 'tailwind'}
+- Component Library: ${branding.designSystem?.componentLibrary || 'custom'}
+
+ASSETS:
+${branding.images?.logo ? `- Logo Available: Yes (use carefully if needed)` : '- Logo: Not available'}
+${branding.images?.favicon ? `- Favicon: ${branding.images.favicon}` : ''}`;
+
+          prompt = `I want you to build a NEW React component/application based on these brand guidelines and the user's requirements.
+
+<branding-format source="${url}">
+${brandInstructions}
+
+RAW BRAND DATA (for reference):
+${JSON.stringify(branding, null, 2)}
+</branding-format>
+
+USER'S REQUEST:
+${brandExtensionPrompt || 'Build a modern web component using these brand guidelines'}
+
+IMPORTANT: The content above in the <branding-format> tags contains the extracted brand guidelines from ${url}.
+Use these guidelines (colors, fonts, spacing, design patterns) to build what the user requested.
+
+CRITICAL REQUIREMENTS:
+- DO NOT recreate the original website at ${url}
+- DO create a COMPLETELY NEW component that fulfills the user's request
+- The user wants: "${brandExtensionPrompt}"
+- Build ONLY what the user requested - nothing more
+- App.jsx should render ONLY the requested component - no extra Header/Footer/Hero unless specifically requested
+- Make it a minimal, focused implementation of the user's request
+
+STYLING REQUIREMENTS:
+- Apply the EXACT colors from the brand palette (primary, accent, background, text colors)
+- Use the EXACT typography (font families, font sizes for h1, h2, body)
+- Apply the spacing system (base unit: ${branding.spacing?.baseUnit || '4'}px)
+- Use the specified border radius (${branding.spacing?.borderRadius || '6px'}) consistently
+- Implement button styles EXACTLY as specified (colors, shadows, border radius)
+- Style input fields with the exact border color and border radius
+- Match the brand's ${branding.colorScheme || 'light'} color scheme
+- Apply the brand personality: ${branding.personality?.tone || 'professional'} tone with ${branding.personality?.energy || 'medium'} energy
+- Use Tailwind CSS with inline color values matching the brand palette EXACTLY
+- If fonts need to be imported, add @import or @font-face rules to index.css
+- Create custom CSS classes in index.css for complex shadows/effects that can't be done with Tailwind
+
+FONT SETUP:
+${branding.typography?.fontFamilies?.primary ? `
+- Add font family "${branding.typography.fontFamilies.primary}" to your CSS
+- Use font stack: ${branding.typography?.fontStacks?.body?.join(', ') || 'system-ui, sans-serif'}
+- Set body font size to ${branding.typography?.fontSizes?.body || '16px'}` : '- Use system fonts'}
+
+COMPONENT STRUCTURE:
+- src/index.css - Include brand fonts, custom shadows/effects, and base styling
+- src/App.jsx - Should ONLY render the requested component (e.g., just <PricingPage /> if user wants pricing)
+- src/components/[RequestedComponent].jsx - The actual component fulfilling the user's request
+
+TECHNICAL REQUIREMENTS:
+- Create a WORKING, self-contained application
+- DO NOT import components that don't exist
+- Make sure the app renders immediately with visible content
+- All colors must match the brand palette EXACTLY
+- All spacing must use the ${branding.spacing?.baseUnit || '4'}px base unit
+- Buttons must have the exact styling specified in the guidelines
+
+Focus on building something NEW, minimal, and functional that perfectly matches the ${brandGuidelines.styleName || 'brand'} aesthetic and design system.`;
+
+        } else {
+          // === NORMAL CLONE MODE PROMPT ===
+          // Store scraped data in conversation context
+          if (!scrapeData) {
+            throw new Error('Scrape data is missing');
           }
-        }
-        
-        const prompt = `I want to recreate the ${url} website as a complete React application based on the scraped content below.
+          setConversationContext(prev => ({
+            ...prev,
+            scrapedWebsites: [...prev.scrapedWebsites, {
+              url: url,
+              content: scrapeData,
+              timestamp: new Date()
+            }],
+            currentProject: `${url} Clone`
+          }));
+
+          // Filter out style-related context when using screenshot/URL-based generation
+          // Only keep user's explicit instructions, not inherited styles
+          let filteredContext = homeContextInput;
+          if (homeUrlInput && homeContextInput) {
+            // Check if the context contains default style names that shouldn't be inherited
+            const stylePatterns = [
+              'Glassmorphism style design',
+              'Neumorphism style design',
+              'Brutalism style design',
+              'Minimalist style design',
+              'Dark Mode style design',
+              'Gradient Rich style design',
+              '3D Depth style design',
+              'Retro Wave style design',
+              'Modern clean and minimalist style design',
+              'Fun colorful and playful style design',
+              'Corporate professional and sleek style design',
+              'Creative artistic and unique style design'
+            ];
+
+            // If the context exactly matches or starts with a style pattern, filter it out
+            const startsWithStyle = stylePatterns.some(pattern =>
+              homeContextInput.trim().startsWith(pattern)
+            );
+
+            if (startsWithStyle) {
+              // Extract only the additional instructions part after the style
+              const additionalMatch = homeContextInput.match(/\. (.+)$/);
+              filteredContext = additionalMatch ? additionalMatch[1] : '';
+            }
+          }
+
+          prompt = `I want to recreate the ${url} website as a complete React application based on the scraped content below.
 
 ${JSON.stringify(scrapeData, null, 2)}
 
@@ -2791,7 +2996,8 @@ IMPORTANT INSTRUCTIONS:
 ${filteredContext ? '- Apply the user\'s context/theme requirements throughout the application' : ''}
 
 Focus on the key sections and content, making it clean and modern.`;
-        
+        }
+
         setGenerationProgress(prev => ({
           isGenerating: true,
           status: 'Initializing AI...',
@@ -2999,16 +3205,18 @@ Focus on the key sections and content, making it clean and modern.`;
           }
           
           setPromptInput(generatedCode);
-          
-          // First application for cloned site should not be in edit mode
+
+          // Apply the code (first time is not edit mode)
           await applyGeneratedCode(generatedCode, false);
-          
+
           addChatMessage(
-            `Successfully recreated ${url} as a modern React app${homeContextInput ? ` with your requested context: "${homeContextInput}"` : ''}! The scraped content is now in my context, so you can ask me to modify specific sections or add features based on the original site.`, 
+            brandExtensionMode
+              ? `Successfully built your custom component using ${cleanUrl}'s brand guidelines! You can now ask me to modify it or add more features.`
+              : `Successfully recreated ${url} as a modern React app${homeContextInput ? ` with your requested context: "${homeContextInput}"` : ''}! The scraped content is now in my context, so you can ask me to modify specific sections or add features based on the original site.`,
             'ai',
             {
               scrapedUrl: url,
-              scrapedContent: scrapeData,
+              scrapedContent: brandExtensionMode ? { brandGuidelines } : scrapeData,
               generatedCode: generatedCode
             }
           );
@@ -3197,22 +3405,43 @@ Focus on the key sections and content, making it clean and modern.`;
                       
                       {/* Pinned screenshot */}
                       {screenshot && (
-                        <div 
-                          className="w-full rounded-lg overflow-hidden border border-gray-200 transition-all duration-300"
-                          style={{ 
-                            opacity: sidebarScrolled ? 0 : 1,
-                            transform: sidebarScrolled ? 'translateY(-20px)' : 'translateY(0)',
-                            pointerEvents: sidebarScrolled ? 'none' : 'auto',
-                            maxHeight: sidebarScrolled ? '0' : '200px'
-                          }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={screenshot}
-                            alt={`${siteName} preview`}
-                            className="w-full h-auto object-cover"
-                            style={{ maxHeight: '200px' }}
-                          />
+                        <div className="w-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-gray-600">Screenshot Preview</span>
+                            <button
+                              onClick={() => setScreenshotCollapsed(!screenshotCollapsed)}
+                              className="text-gray-500 hover:text-gray-700 transition-colors p-1"
+                              aria-label={screenshotCollapsed ? 'Expand screenshot' : 'Collapse screenshot'}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                className={`transition-transform duration-300 ${screenshotCollapsed ? 'rotate-180' : ''}`}
+                              >
+                                <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                          </div>
+                          <div
+                            className="w-full rounded-lg overflow-hidden border border-gray-200 transition-all duration-300"
+                            style={{
+                              opacity: screenshotCollapsed ? 0 : 1,
+                              transform: screenshotCollapsed ? 'translateY(-20px)' : 'translateY(0)',
+                              pointerEvents: screenshotCollapsed ? 'none' : 'auto',
+                              maxHeight: screenshotCollapsed ? '0' : '200px'
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={screenshot}
+                              alt={`${siteName} preview`}
+                              className="w-full h-auto object-cover"
+                              style={{ maxHeight: '200px' }}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -3222,13 +3451,9 @@ Focus on the key sections and content, making it clean and modern.`;
             </div>
           )}
 
-          <div 
-            className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 scrollbar-hide" 
-            ref={chatMessagesRef}
-            onScroll={(e) => {
-              const scrollTop = e.currentTarget.scrollTop;
-              setSidebarScrolled(scrollTop > 50);
-            }}>
+          <div
+            className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 scrollbar-hide"
+            ref={chatMessagesRef}>
             {chatMessages.map((msg, idx) => {
               // Check if this message is from a successful generation
               const isGenerationComplete = msg.content.includes('Successfully recreated') || 
@@ -3278,14 +3503,208 @@ Focus on the key sections and content, making it clean and modern.`;
                         </div>
                       </div>
                     ) : (
-                      <span className="text-body-input">{msg.content}</span>
+                      <span className="text-sm">{msg.content}</span>
                     )}
                       </div>
                   
+                      {/* Show branding data if this is a brand extraction message */}
+                      {msg.metadata?.brandingData && (
+                        <div className="mt-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl overflow-hidden max-w-[500px] shadow-sm">
+                          <div className="bg-[#36322F] px-16 py-12">
+                            <div className="flex items-center gap-8">
+                              <Image
+                                src={`https://www.google.com/s2/favicons?domain=${msg.metadata.sourceUrl}&sz=32`}
+                                alt=""
+                                width={64}
+                                height={64}
+                                className="w-16 h-16"
+                              />
+                              <div className="text-sm font-semibold text-white">
+                                Brand Guidelines
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-16">
+                            {/* Color Scheme Mode */}
+                            {msg.metadata.brandingData.colorScheme && (
+                              <div className="mb-16">
+                                <div className="text-sm">
+                                  <span className="text-gray-600 font-medium">Mode:</span>{' '}
+                                  <span className="font-semibold text-gray-900 capitalize">{msg.metadata.brandingData.colorScheme}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Colors */}
+                            {msg.metadata.brandingData.colors && (
+                              <div className="mb-16">
+                                <div className="text-sm font-semibold text-gray-900 mb-8">Colors</div>
+                                <div className="flex flex-wrap gap-12">
+                                  {msg.metadata.brandingData.colors.primary && (
+                                    <div className="flex items-center gap-8">
+                                      <div className="w-32 h-32 rounded border border-gray-300" style={{ backgroundColor: msg.metadata.brandingData.colors.primary }} />
+                                      <div className="text-sm">
+                                        <div className="font-semibold text-gray-900">Primary</div>
+                                        <div className="text-gray-600 font-mono text-xs">{msg.metadata.brandingData.colors.primary}</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.colors.accent && (
+                                    <div className="flex items-center gap-8">
+                                      <div className="w-32 h-32 rounded border border-gray-300" style={{ backgroundColor: msg.metadata.brandingData.colors.accent }} />
+                                      <div className="text-sm">
+                                        <div className="font-semibold text-gray-900">Accent</div>
+                                        <div className="text-gray-600 font-mono text-xs">{msg.metadata.brandingData.colors.accent}</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.colors.background && (
+                                    <div className="flex items-center gap-8">
+                                      <div className="w-32 h-32 rounded border border-gray-300" style={{ backgroundColor: msg.metadata.brandingData.colors.background }} />
+                                      <div className="text-sm">
+                                        <div className="font-semibold text-gray-900">Background</div>
+                                        <div className="text-gray-600 font-mono text-xs">{msg.metadata.brandingData.colors.background}</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.colors.textPrimary && (
+                                    <div className="flex items-center gap-8">
+                                      <div className="w-32 h-32 rounded border border-gray-300" style={{ backgroundColor: msg.metadata.brandingData.colors.textPrimary }} />
+                                      <div className="text-sm">
+                                        <div className="font-semibold text-gray-900">Text</div>
+                                        <div className="text-gray-600 font-mono text-xs">{msg.metadata.brandingData.colors.textPrimary}</div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Typography */}
+                            {msg.metadata.brandingData.typography && (
+                              <div className="mb-16">
+                                <div className="text-sm font-semibold text-gray-900 mb-8">Typography</div>
+                                <div className="grid grid-cols-2 gap-12 text-sm">
+                                  {msg.metadata.brandingData.typography.fontFamilies?.primary && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">Primary:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.typography.fontFamilies.primary}</span>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.typography.fontFamilies?.heading && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">Heading:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.typography.fontFamilies.heading}</span>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.typography.fontSizes?.h1 && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">H1 Size:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.typography.fontSizes.h1}</span>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.typography.fontSizes?.h2 && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">H2 Size:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.typography.fontSizes.h2}</span>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.typography.fontSizes?.body && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">Body Size:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.typography.fontSizes.body}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Spacing */}
+                            {msg.metadata.brandingData.spacing && (
+                              <div className="mb-16">
+                                <div className="text-sm font-semibold text-gray-900 mb-8">Spacing</div>
+                                <div className="flex flex-wrap gap-16 text-sm">
+                                  {msg.metadata.brandingData.spacing.baseUnit && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">Base Unit:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.spacing.baseUnit}px</span>
+                                    </div>
+                                  )}
+                                  {msg.metadata.brandingData.spacing.borderRadius && (
+                                    <div>
+                                      <span className="text-gray-600 font-medium">Border Radius:</span>{' '}
+                                      <span className="font-semibold text-gray-900">{msg.metadata.brandingData.spacing.borderRadius}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Button Styles */}
+                            {msg.metadata.brandingData.components?.buttonPrimary && (
+                              <div className="mb-16">
+                                <div className="text-sm font-semibold text-gray-900 mb-8">Button Styles</div>
+                                <div className="flex flex-wrap gap-12">
+                                  <div>
+                                    <div className="text-xs text-gray-600 mb-6 font-medium">Primary Button</div>
+                                    <button
+                                      className="px-16 py-8 text-sm font-medium"
+                                      style={{
+                                        backgroundColor: msg.metadata.brandingData.components.buttonPrimary.background,
+                                        color: msg.metadata.brandingData.components.buttonPrimary.textColor,
+                                        borderRadius: msg.metadata.brandingData.components.buttonPrimary.borderRadius,
+                                        boxShadow: msg.metadata.brandingData.components.buttonPrimary.shadow
+                                      }}
+                                    >
+                                      Sample Button
+                                    </button>
+                                  </div>
+                                  {msg.metadata.brandingData.components?.buttonSecondary && (
+                                    <div>
+                                      <div className="text-xs text-gray-600 mb-6 font-medium">Secondary Button</div>
+                                      <button
+                                        className="px-16 py-8 text-sm font-medium"
+                                        style={{
+                                          backgroundColor: msg.metadata.brandingData.components.buttonSecondary.background,
+                                          color: msg.metadata.brandingData.components.buttonSecondary.textColor,
+                                          borderRadius: msg.metadata.brandingData.components.buttonSecondary.borderRadius,
+                                          boxShadow: msg.metadata.brandingData.components.buttonSecondary.shadow
+                                        }}
+                                      >
+                                        Sample Button
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Personality */}
+                            {msg.metadata.brandingData.personality && (
+                              <div className="text-sm">
+                                <span className="text-gray-600 font-medium">Personality:</span>{' '}
+                                <span className="font-semibold text-gray-900 capitalize">
+                                  {msg.metadata.brandingData.personality.tone} tone, {msg.metadata.brandingData.personality.energy} energy
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Target Audience */}
+                            {msg.metadata.brandingData.personality?.targetAudience && (
+                              <div className="text-sm mt-8">
+                                <span className="text-gray-600 font-medium">Target:</span>{' '}
+                                <span className="text-gray-900">{msg.metadata.brandingData.personality.targetAudience}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Show applied files if this is an apply success message */}
                       {msg.metadata?.appliedFiles && msg.metadata.appliedFiles.length > 0 && (
                     <div className="mt-3 inline-block bg-gray-100 rounded-[10px] p-5">
-                      <div className="text-xs font-medium mb-3 text-gray-700">
+                      <div className="text-sm font-medium mb-3 text-gray-700">
                         {msg.content.includes('Applied') ? 'Files Updated:' : 'Generated Files:'}
                       </div>
                       <div className="flex flex-wrap items-start gap-2">
@@ -3295,11 +3714,11 @@ Focus on the key sections and content, making it clean and modern.`;
                           const fileType = fileExt === 'jsx' || fileExt === 'js' ? 'javascript' :
                                           fileExt === 'css' ? 'css' :
                                           fileExt === 'json' ? 'json' : 'text';
-                          
+
                           return (
                             <div
                               key={`applied-${fileIdx}`}
-                              className="inline-flex items-center gap-1.5 px-6 py-1.5 bg-[#36322F] text-white rounded-[10px] text-xs animate-fade-in-up"
+                              className="inline-flex items-center gap-1.5 px-6 py-1.5 bg-[#36322F] text-white rounded-[10px] text-sm animate-fade-in-up"
                               style={{ animationDelay: `${fileIdx * 30}ms` }}
                             >
                               <span className={`inline-block w-1.5 h-1.5 rounded-full ${
@@ -3373,9 +3792,9 @@ Focus on the key sections and content, making it clean and modern.`;
                   
                   {/* Show current file being generated */}
                   {generationProgress.currentFile && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-[#36322F]/70 text-white rounded-[10px] text-xs animate-pulse"
+                    <div className="flex items-center gap-1 px-2 py-1 bg-[#36322F]/70 text-white rounded-[10px] text-sm animate-pulse"
                       style={{ animationDelay: `${generationProgress.files.length * 30}ms` }}>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-16 h-16 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       {generationProgress.currentFile.path.split('/').pop()}
                     </div>
                   )}

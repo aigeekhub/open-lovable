@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 
 import { setIntervalOnVisible } from "@/utils/set-timeout-on-visible";
 import data from "./hero-flame-data.json";
 
-export default function HeroFlame() {
+function HeroFlame() {
   const ref = useRef<HTMLDivElement>(null);
   const ref2 = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -16,16 +16,13 @@ export default function HeroFlame() {
     const interval = setIntervalOnVisible({
       element: wrapperRef.current,
       callback: () => {
+        if (!ref.current || !ref2.current) return;
+        
         index++;
         if (index >= data.length) index = 0;
 
-        if (ref.current) {
-          ref.current.innerHTML = data[index];
-        }
-
-        if (ref2.current) {
-          ref2.current.innerHTML = data[index];
-        }
+        ref.current.innerHTML = data[index];
+        ref2.current.innerHTML = data[index];
       },
       interval: 85,
     });
@@ -66,3 +63,5 @@ export default function HeroFlame() {
     </div>
   );
 }
+
+export default memo(HeroFlame);

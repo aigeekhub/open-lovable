@@ -1,5 +1,5 @@
 import { cn } from "@/utils/cn";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 
 export function JsonErrorHighlighter({
   value,
@@ -31,7 +31,7 @@ export function JsonErrorHighlighter({
   const errorLineIdx = (error?.line ?? 1) - 1;
 
   // Calculate visible lines on scroll or resize
-  const recalcVisibleLines = () => {
+  const recalcVisibleLines = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24;
@@ -49,7 +49,7 @@ export function JsonErrorHighlighter({
       lineHeight,
       clientHeight,
     });
-  };
+  }, [lines.length]);
 
   useEffect(() => {
     recalcVisibleLines();
@@ -57,7 +57,7 @@ export function JsonErrorHighlighter({
     const handleResize = () => recalcVisibleLines();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [value]);
+  }, [value, recalcVisibleLines]);
 
   // Attach scroll handler
   const handleScroll = () => {

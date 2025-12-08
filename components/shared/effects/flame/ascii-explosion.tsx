@@ -1,13 +1,13 @@
 "use client";
 
-import { HTMLAttributes, useEffect, useRef } from "react";
+import { HTMLAttributes, useEffect, useRef, memo } from "react";
 
 import { cn } from "@/utils/cn";
 import { setIntervalOnVisible } from "@/utils/set-timeout-on-visible";
 
 import data from "./explosion-data.json";
 
-export function AsciiExplosion(attrs: HTMLAttributes<HTMLDivElement>) {
+function AsciiExplosion(attrs: HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +21,9 @@ export function AsciiExplosion(attrs: HTMLAttributes<HTMLDivElement>) {
         if (index >= data.length) index = -40;
         if (index < 0) return;
 
-        ref.current!.innerHTML = data[index];
+        if (ref.current) {
+          ref.current.innerHTML = data[index];
+        }
       },
       interval: 40,
     });
@@ -52,5 +54,11 @@ export function AsciiExplosion(attrs: HTMLAttributes<HTMLDivElement>) {
   );
 }
 
+// Memoized version to prevent re-renders on parent state changes
+const MemoizedAsciiExplosion = memo(AsciiExplosion);
+
+// Named export
+export { AsciiExplosion };
+
 // Default export for backward compatibility
-export default AsciiExplosion;
+export default MemoizedAsciiExplosion;

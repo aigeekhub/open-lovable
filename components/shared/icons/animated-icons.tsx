@@ -79,7 +79,7 @@ const withChartIconAnimation = (IconComponent: React.ComponentType<any>) => {
   }) => {
     const controls = useAnimation();
 
-    const handleHoverStart = async () => {
+    const handleHoverStart = useCallback(async () => {
       await controls.start((i) => ({
         pathLength: 0,
         opacity: 0,
@@ -90,7 +90,11 @@ const withChartIconAnimation = (IconComponent: React.ComponentType<any>) => {
         opacity: 1,
         transition: { delay: i * 0.1, duration: 0.3 },
       }));
-    };
+    }, [controls]);
+
+    const handleHoverEnd = useCallback(() => {
+      controls.start("normal");
+    }, [controls]);
 
     useEffect(() => {
       if (isHovered) {
@@ -98,11 +102,7 @@ const withChartIconAnimation = (IconComponent: React.ComponentType<any>) => {
       } else {
         handleHoverEnd();
       }
-    }, [isHovered, handleHoverStart]);
-
-    const handleHoverEnd = () => {
-      controls.start("normal");
-    };
+    }, [isHovered, handleHoverStart, handleHoverEnd]);
 
     return (
       <div className={className}>

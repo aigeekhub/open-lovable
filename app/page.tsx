@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { appConfig } from '@/config/app.config';
@@ -49,6 +50,7 @@ export default function HomePage() {
   const [showSelectMessage, setShowSelectMessage] = useState<boolean>(false);
   const [showInstructionsForIndex, setShowInstructionsForIndex] = useState<number | null>(null);
   const [additionalInstructions, setAdditionalInstructions] = useState<string>('');
+  const [extendBrandStyles, setExtendBrandStyles] = useState<boolean>(false);
   const router = useRouter();
   
   // Simple URL validation
@@ -83,9 +85,15 @@ export default function HomePage() {
 
   const handleSubmit = async (selectedResult?: SearchResult) => {
     const inputValue = url.trim();
-    
+
     if (!inputValue) {
       toast.error("Please enter a URL or search term");
+      return;
+    }
+
+    // Validate brand extension mode requirements
+    if (extendBrandStyles && isURL(inputValue) && !additionalInstructions.trim()) {
+      toast.error("Please describe what you want to build with this brand's styles");
       return;
     }
     
@@ -107,13 +115,24 @@ export default function HomePage() {
       return;
     }
     
-    // If it's a URL, go straight to generation
+    // If it's a URL, check if we're extending brand styles or cloning
     if (isURL(inputValue)) {
-      sessionStorage.setItem('targetUrl', inputValue);
-      sessionStorage.setItem('selectedStyle', selectedStyle);
-      sessionStorage.setItem('selectedModel', selectedModel);
-      sessionStorage.setItem('autoStart', 'true');
-      router.push('/generation');
+      if (extendBrandStyles) {
+        // Brand extension mode - extract brand styles and use them with the prompt
+        sessionStorage.setItem('targetUrl', inputValue);
+        sessionStorage.setItem('selectedModel', selectedModel);
+        sessionStorage.setItem('autoStart', 'true');
+        sessionStorage.setItem('brandExtensionMode', 'true');
+        sessionStorage.setItem('brandExtensionPrompt', additionalInstructions || '');
+        router.push('/generation');
+      } else {
+        // Normal clone mode
+        sessionStorage.setItem('targetUrl', inputValue);
+        sessionStorage.setItem('selectedStyle', selectedStyle);
+        sessionStorage.setItem('selectedModel', selectedModel);
+        sessionStorage.setItem('autoStart', 'true');
+        router.push('/generation');
+      }
     } else {
       // It's a search term, fade out if results exist, then search
       if (hasSearched && searchResults.length > 0) {
@@ -244,7 +263,7 @@ export default function HomePage() {
               <HomeHeroBadge />
               <HomeHeroTitle />
               <p className="text-center text-body-large">
-                Re-imagine any website, in seconds.
+                Clone brand format or re-imagine any website, in seconds.
               </p>
               <Link
                 className="bg-black-alpha-4 hover:bg-black-alpha-6 rounded-6 px-8 lg:px-6 text-label-large h-30 lg:h-24 block mt-8 mx-auto w-max gap-4 transition-all"
@@ -269,14 +288,14 @@ export default function HomePage() {
             <div className="max-w-552 mx-auto z-[11] lg:z-[2]">
               <div className="rounded-20 -mt-30 lg:-mt-30">
                 <div
-                  className="bg-white rounded-20"
+                  className="bg-white rounded-20 relative z-10"
                   style={{
                     boxShadow:
                       "0px 0px 44px 0px rgba(0, 0, 0, 0.02), 0px 88px 56px -20px rgba(0, 0, 0, 0.03), 0px 56px 56px -20px rgba(0, 0, 0, 0.02), 0px 32px 32px -20px rgba(0, 0, 0, 0.03), 0px 16px 24px -12px rgba(0, 0, 0, 0.03), 0px 0px 0px 1px rgba(0, 0, 0, 0.05), 0px 0px 0px 10px #F9F9F9",
                   }}
                 >
 
-                <div className="p-16 flex gap-12 items-center w-full relative bg-white rounded-20">
+                <div className="p-[28px] flex gap-12 items-center w-full relative bg-white rounded-20">
                   {/* Show different UI when search results are displayed */}
                   {hasSearched && searchResults.length > 0 && !isFadingOut ? (
                     <>
@@ -405,50 +424,112 @@ export default function HomePage() {
                   )}
                 </div>
 
-
                 {/* Options Section - Only show when valid URL */}
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  isValidUrl ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'
+                  isValidUrl ? (extendBrandStyles ? 'max-h-[400px]' : 'max-h-[300px]') + ' opacity-100' : 'max-h-0 opacity-0'
                 }`}>
-                  <div className="p-[28px]">
+                  <div className="px-[28px] pt-0 pb-[28px]">
                     <div className="border-t border-gray-100 bg-white">
-                      {/* Style Selector */}
-                      <div className={`mb-2 pt-4 transition-all duration-300 transform ${
+                      {/* Extend Brand Styles Toggle */}
+                      <div className={`transition-all duration-300 transform ${
                         isValidUrl ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
-                      }`} style={{ transitionDelay: '100ms' }}>
-                        <div className="grid grid-cols-4 gap-1">
-                          {styles.map((style, index) => (
+                      }`} style={{ transitionDelay: '50ms' }}>
+                        <div className="py-8 grid grid-cols-2 items-center gap-12 group cursor-pointer" onClick={() => setExtendBrandStyles(!extendBrandStyles)}>
+                          <div className="flex select-none">
+                            <div className="flex lg-max:flex-col whitespace-nowrap flex-wrap min-w-0 gap-8 lg:justify-between flex-1">
+                              <div className="text-xs font-medium text-black-alpha-72 transition-all group-hover:text-accent-black relative">
+                                Extend brand styles
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
                             <button
-                              key={style.id}
-                              onClick={() => setSelectedStyle(style.id)}
-                              className={`
-                                py-2.5 px-2 rounded text-[10px] font-medium border transition-all text-center
-                                ${selectedStyle === style.id 
-                                  ? 'border-orange-500 bg-orange-50 text-orange-900' 
-                                  : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-                                }
-                                ${isValidUrl ? 'opacity-100' : 'opacity-0'}
-                              `}
+                              className="transition-all relative rounded-full group bg-black-alpha-10"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExtendBrandStyles(!extendBrandStyles);
+                              }}
                               style={{
-                                transitionDelay: `${150 + index * 30}ms`,
-                                transition: 'all 0.3s ease-in-out'
+                                width: '50px',
+                                height: '20px',
+                                boxShadow: 'rgba(0, 0, 0, 0.02) 0px 6px 12px 0px inset, rgba(0, 0, 0, 0.02) 0px 0.75px 0.75px 0px inset, rgba(0, 0, 0, 0.04) 0px 0.25px 0.25px 0px inset'
                               }}
                             >
-                              {style.name}
+                              <div
+                                className={`overlay transition-opacity ${extendBrandStyles ? 'opacity-100' : 'opacity-0'}`}
+                                style={{ background: 'color(display-p3 0.9059 0.3294 0.0784)', backgroundColor: '#FA4500' }}
+                              />
+                              <div
+                                className="top-[2px] left-[2px] transition-all absolute rounded-full bg-accent-white"
+                                style={{
+                                  width: '28px',
+                                  height: '16px',
+                                  boxShadow: 'rgba(0, 0, 0, 0.06) 0px 6px 12px -3px, rgba(0, 0, 0, 0.06) 0px 3px 6px -1px, rgba(0, 0, 0, 0.04) 0px 1px 2px 0px, rgba(0, 0, 0, 0.08) 0px 0.5px 0.5px 0px',
+                                  transform: extendBrandStyles ? 'translateX(16px)' : 'none'
+                                }}
+                              />
                             </button>
-                          ))}
+                          </div>
                         </div>
                       </div>
 
+                      {/* Brand Extension Prompt - Show when toggle is enabled */}
+                      {extendBrandStyles && (
+                        <div className="pb-10 transition-all duration-300 opacity-100">
+                          <textarea
+                            value={additionalInstructions}
+                            onChange={(e) => setAdditionalInstructions(e.target.value)}
+                            placeholder="Describe the new functionality you want to build using this brand's styles..."
+                            className="w-full px-4 py-10 text-xs font-medium text-gray-700 bg-gray-50 rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder:text-gray-400 min-h-[80px] resize-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Style Selector - Hide when brand extension mode is enabled */}
+                      {!extendBrandStyles && (
+                        <div className={`mb-2 transition-all duration-300 transform ${
+                          isValidUrl ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+                        }`} style={{ transitionDelay: '100ms' }}>
+                          <div className="grid grid-cols-4 gap-2">
+                            {styles.map((style, index) => (
+                              <button
+                                key={style.id}
+                                onClick={() => setSelectedStyle(style.id)}
+                                className={`
+                                  ${selectedStyle === style.id
+                                    ? 'bg-heat-100 hover:bg-heat-200 flex items-center justify-center button relative text-label-medium button-primary group/button rounded-10 p-8 text-accent-white active:scale-[0.995] border-0'
+                                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700 py-3.5 px-4 rounded text-xs font-medium border text-center'
+                                  }
+                                  transition-all
+                                  ${isValidUrl ? 'opacity-100' : 'opacity-0'}
+                                `}
+                                style={{
+                                  transitionDelay: `${150 + index * 30}ms`,
+                                  transition: 'all 0.3s ease-in-out'
+                                }}
+                              >
+                                {selectedStyle === style.id && (
+                                  <div className="button-background absolute inset-0 rounded-10 pointer-events-none" />
+                                )}
+                                <span className={selectedStyle === style.id ? 'relative' : ''}>
+                                  {style.name}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Model Selector Dropdown and Additional Instructions */}
-                      <div className={`flex gap-3 mt-2 pb-4 transition-all duration-300 transform ${
+                      <div className={`flex items-center gap-3 mt-2 pb-4 transition-all duration-300 transform ${
                         isValidUrl ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
                       }`} style={{ transitionDelay: '400ms' }}>
                         {/* Model Dropdown */}
                         <select
                           value={selectedModel}
                           onChange={(e) => setSelectedModel(e.target.value)}
-                          className="px-3 py-2.5 text-[10px] font-medium text-gray-700 bg-white rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          className={`px-3 py-2.5 text-xs font-medium text-gray-700 bg-white rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 ${extendBrandStyles ? 'flex-1' : ''}`}
                         >
                           {models.map((model) => (
                             <option key={model.id} value={model.id}>
@@ -456,14 +537,16 @@ export default function HomePage() {
                             </option>
                           ))}
                         </select>
-                        
-                        {/* Additional Instructions */}
-                        <input
-                          type="text"
-                          className="flex-1 px-3 py-2.5 text-[10px] text-gray-700 bg-gray-50 rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder:text-gray-400"
-                          placeholder="Additional instructions (optional)"
-                          onChange={(e) => sessionStorage.setItem('additionalInstructions', e.target.value)}
-                        />
+
+                        {/* Additional Instructions - Hidden when extend brand styles is enabled */}
+                        {!extendBrandStyles && (
+                          <input
+                            type="text"
+                            className="flex-1 px-3 py-2.5 text-xs font-medium text-gray-700 bg-gray-50 rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder:text-gray-400"
+                            placeholder="Additional instructions (optional)"
+                            onChange={(e) => sessionStorage.setItem('additionalInstructions', e.target.value)}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -702,12 +785,15 @@ export default function HomePage() {
                       </div>
                       
                       {result.screenshot ? (
-                        <img 
-                          src={result.screenshot} 
-                          alt={result.title}
-                          className="w-full h-full object-cover object-top"
-                          loading="lazy"
-                        />
+                        <div className="relative w-full h-full">
+                          <Image 
+                            src={result.screenshot} 
+                            alt={result.title}
+                            fill
+                            className="object-cover object-top"
+                            loading="lazy"
+                          />
+                        </div>
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
                           <div className="text-center">

@@ -38,7 +38,7 @@ export default function HeroScrapingTag({
     };
 
     animate();
-  }, []);
+  }, [label]);
 
   return (
     <motion.div

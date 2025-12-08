@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { setIntervalOnVisible } from "@/utils/set-timeout-on-visible";
 
 export default function SubtleAsciiAnimation({
@@ -11,7 +11,7 @@ export default function SubtleAsciiAnimation({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Simple ASCII pattern for subtle animation
-  const asciiFrames = [
+  const asciiFrames = useMemo(() => [
     "░░░░░░░░░░░░░░░░",
     "▒░░░░░░░░░░░░░░░",
     "▒▒░░░░░░░░░░░░░░",
@@ -30,7 +30,7 @@ export default function SubtleAsciiAnimation({
     "░░░░░░░░░░░░░▒▒░",
     "░░░░░░░░░░░░░░▒▒",
     "░░░░░░░░░░░░░░░▒",
-  ];
+  ], []);
 
   useEffect(() => {
     let frameIndex = 0;
@@ -55,7 +55,7 @@ export default function SubtleAsciiAnimation({
     return () => {
       cleanup?.();
     };
-  }, []);
+  }, [asciiFrames]);
 
   return (
     <div

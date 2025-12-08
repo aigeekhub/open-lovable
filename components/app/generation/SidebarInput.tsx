@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { appConfig } from "@/config/app.config";
 
 interface SidebarInputProps {
   onSubmit: (url: string, style: string, model: string, instructions?: string) => void;
@@ -11,7 +12,7 @@ interface SidebarInputProps {
 export default function SidebarInput({ onSubmit, disabled = false }: SidebarInputProps) {
   const [url, setUrl] = useState<string>("");
   const [selectedStyle, setSelectedStyle] = useState<string>("1");
-  const [selectedModel, setSelectedModel] = useState<string>("moonshotai/kimi-k2-instruct-0905");
+  const [selectedModel, setSelectedModel] = useState<string>(appConfig.ai.defaultModel);
   const [additionalInstructions, setAdditionalInstructions] = useState<string>("");
   const [isValidUrl, setIsValidUrl] = useState<boolean>(false);
 
@@ -33,12 +34,10 @@ export default function SidebarInput({ onSubmit, disabled = false }: SidebarInpu
     { id: "8", name: "Retro Wave", description: "80s inspired" },
   ];
 
-  const models = [
-    { id: "moonshotai/kimi-k2-instruct-0905", name: "Kimi K2 0905 on Groq" },
-    { id: "openai/gpt-5", name: "GPT-5" },
-    { id: "anthropic/claude-sonnet-4-20250514", name: "Sonnet 4" },
-    { id: "google/gemini-2.0-flash-exp", name: "Gemini 2.0" },
-  ];
+  const models = appConfig.ai.availableModels.map(model => ({
+    id: model,
+    name: appConfig.ai.modelDisplayNames[model] || model,
+  }));
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

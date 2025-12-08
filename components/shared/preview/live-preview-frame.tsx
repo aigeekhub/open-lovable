@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export default function LivePreviewFrame({
   sessionId,
@@ -19,6 +19,7 @@ export default function LivePreviewFrame({
   const idleStartTimerRef = useRef<NodeJS.Timeout | null>(null);
   const idleMoveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(true);
   const [cursorPosition, setCursorPosition] = useState<{
     x: number;
@@ -31,7 +32,7 @@ export default function LivePreviewFrame({
   const [isIdle, setIsIdle] = useState(false);
 
   // Function to start the random idle movement sequence
-  const scheduleNextIdleMove = () => {
+  const scheduleNextIdleMove = useCallback(() => {
     if (idleMoveTimerRef.current) {
       clearTimeout(idleMoveTimerRef.current);
     }
@@ -49,7 +50,7 @@ export default function LivePreviewFrame({
         scheduleNextIdleMove(); // Schedule the next one
       }
     }, randomDelay);
-  };
+  }, [isIdle]);
 
   // Effect to handle starting/stopping idle movement sequence
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function LivePreviewFrame({
         clearTimeout(idleMoveTimerRef.current);
       }
     };
-  }, [isIdle]);
+  }, [isIdle, scheduleNextIdleMove]);
 
   // Main Animation effect (runs continuously)
   useEffect(() => {
@@ -122,7 +123,7 @@ export default function LivePreviewFrame({
         clearTimeout(idleStartTimerRef.current);
       }
     };
-  }, [targetPosition]); // Re-run main loop logic if targetPosition changes
+  }, [targetPosition, isIdle]); // Re-run main loop logic if targetPosition changes
 
   const cleanupConnection = () => {
     if (reconnectTimeoutRef.current) {
@@ -150,7 +151,7 @@ export default function LivePreviewFrame({
     }
   }, [onScrapeComplete]);
 
-  const connect = () => {
+  const connect = useCallback(() => {
     setIsConnecting(true);
     // Clear any existing connection
     if (wsRef.current) {
@@ -182,10 +183,8 @@ export default function LivePreviewFrame({
             typeof event.data === "string" &&
             event.data.startsWith("data:image")
           ) {
-            if (imgRef.current) {
-              imgRef.current.src = event.data;
-              return;
-            }
+            setImageSrc(event.data);
+            return;
           }
 
           // If not direct image data, try parsing as JSON
@@ -232,19 +231,15 @@ export default function LivePreviewFrame({
             }
           }
 
-          if (imgRef.current && data.frame) {
+          if (data.frame) {
             const img = "data:image/jpeg;base64," + data.frame;
             localStorage.setItem("browserImageData", img);
-            imgRef.current.src = img;
+            setImageSrc(img);
           }
         } catch (e) {
           // Try to use raw data as fallback if JSON parsing fails
-          if (typeof event.data === "string" && imgRef.current) {
-            try {
-              imgRef.current.src = event.data;
-            } catch (imgError) {
-              console.error("Failed to set image source directly:", imgError);
-            }
+          if (typeof event.data === "string") {
+            setImageSrc(event.data);
           }
         }
       });
@@ -270,7 +265,7 @@ export default function LivePreviewFrame({
       console.error("Failed to create connection");
       setIsConnecting(false);
     }
-  };
+  }, [sessionId, isIdle]);
 
   useEffect(() => {
     // Only connect if we have a sessionId
@@ -289,7 +284,7 @@ export default function LivePreviewFrame({
         cleanupConnection();
       };
     }
-  }, [sessionId]); // Re-run effect when sessionId changes
+  }, [sessionId, connect]); // Re-run effect when sessionId changes
 
   return (
     <div
@@ -322,21 +317,25 @@ export default function LivePreviewFrame({
         </div>
       ) : null}
 
-      {/* Preview image */}
-      <img
-        ref={imgRef}
-        id="live-frame"
-        onLoad={() => {
-          setImageLoaded(true);
-          if (onScrapeComplete) onScrapeComplete();
-        }}
-        className={`w-auto h-auto max-w-full max-h-full object-contain transform-gpu ${
-          !imageLoaded ? "opacity-0 scale-95" : "opacity-100 scale-100"
-        } transition-all duration-300 ease-out`}
-        style={{
-          backgroundColor: "#f0f0f0",
-        }}
-      />
+      {/* Preview image - Using regular img tag for dynamic WebSocket stream */}
+      {imageSrc && (
+        <img
+          ref={imgRef}
+          id="live-frame"
+          src={imageSrc}
+          alt="Live preview"
+          onLoad={() => {
+            setImageLoaded(true);
+            if (onScrapeComplete) onScrapeComplete();
+          }}
+          className={`w-auto h-auto max-w-full max-h-full object-contain transform-gpu ${
+            !imageLoaded ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          } transition-all duration-300 ease-out`}
+          style={{
+            backgroundColor: "#f0f0f0",
+          }}
+        />
+      )}
     </div>
   );
 }
