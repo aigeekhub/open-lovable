@@ -6,10 +6,28 @@ import Link from "next/link";
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedResult, setGeneratedResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = () => {
-    if (prompt.trim()) {
-      console.log("Generating:", prompt);
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError("Please describe your AI vision first");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setGeneratedResult(null);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setGeneratedResult(`✨ Processing your vision: "${prompt}"\n\n🚀 Initializing quantum-enhanced neural networks...\n⚡ Deploying AI infrastructure...\n✅ Your AI solution is being built!`);
+    } catch (err) {
+      setError("Failed to generate. Please try again.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -116,13 +134,62 @@ export default function HomePage() {
                 />
                 <button
                   onClick={handleGenerate}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl font-medium transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/30"
+                  disabled={isGenerating || !prompt.trim()}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all transform shadow-lg ${
+                    isGenerating || !prompt.trim()
+                      ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 active:scale-95 shadow-blue-500/30'
+                  }`}
                 >
-                  Generate
+                  {isGenerating ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Generating...
+                    </span>
+                  ) : (
+                    'Generate'
+                  )}
                 </button>
               </div>
             </div>
           </div>
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-center">
+              {error}
+            </div>
+          )}
+
+          {generatedResult && (
+            <div className="mt-6 relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-75" />
+              <div className="relative bg-[#1a1f3a] border border-green-500/30 rounded-2xl p-6 backdrop-blur-sm">
+                <div className="flex items-start gap-3 mb-4">
+                  <svg className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-green-400 mb-2">Generation Complete!</h3>
+                    <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                      {generatedResult}
+                    </pre>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setGeneratedResult(null);
+                    setPrompt("");
+                  }}
+                  className="w-full mt-4 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-400 transition-all"
+                >
+                  Start New Generation
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Feature Cards */}
