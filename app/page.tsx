@@ -3,30 +3,46 @@
 import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { appConfig } from "@/config/app.config";
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedResult, setGeneratedResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const isURL = (str: string): boolean => {
+    const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
+    return urlPattern.test(str.trim());
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError("Please describe your AI vision first");
+      setError("Please describe your AI vision or enter a URL to clone");
       return;
     }
 
     setIsGenerating(true);
     setError(null);
-    setGeneratedResult(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const inputValue = prompt.trim();
 
-      setGeneratedResult(`✨ Processing your vision: "${prompt}"\n\n🚀 Initializing quantum-enhanced neural networks...\n⚡ Deploying AI infrastructure...\n✅ Your AI solution is being built!`);
+      if (isURL(inputValue)) {
+        sessionStorage.setItem('targetUrl', inputValue);
+        sessionStorage.setItem('selectedModel', appConfig.ai.defaultModel);
+        sessionStorage.setItem('autoStart', 'true');
+      } else {
+        sessionStorage.setItem('promptOnly', 'true');
+        sessionStorage.setItem('initialPrompt', inputValue);
+        sessionStorage.setItem('selectedModel', appConfig.ai.defaultModel);
+        sessionStorage.setItem('autoStart', 'true');
+      }
+
+      router.push('/generation');
     } catch (err) {
-      setError("Failed to generate. Please try again.");
-    } finally {
+      setError("Failed to start generation. Please try again.");
       setIsGenerating(false);
     }
   };
@@ -129,7 +145,7 @@ export default function HomePage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleGenerate();
                   }}
-                  placeholder="Describe your AI vision and watch it come to life..."
+                  placeholder="Enter a URL to clone or describe what you want to build..."
                   className="flex-1 bg-transparent text-white placeholder-gray-500 outline-none text-lg"
                 />
                 <button
@@ -163,38 +179,15 @@ export default function HomePage() {
             </div>
           )}
 
-          {generatedResult && (
-            <div className="mt-6 relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 via-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-75" />
-              <div className="relative bg-[#1a1f3a] border border-green-500/30 rounded-2xl p-6 backdrop-blur-sm">
-                <div className="flex items-start gap-3 mb-4">
-                  <svg className="w-6 h-6 text-green-400 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-green-400 mb-2">Generation Complete!</h3>
-                    <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                      {generatedResult}
-                    </pre>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setGeneratedResult(null);
-                    setPrompt("");
-                  }}
-                  className="w-full mt-4 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-400 transition-all"
-                >
-                  Start New Generation
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="mt-8 text-center text-gray-400 text-sm">
+            <p>Try: <span className="text-blue-400">example.com</span> to clone a website</p>
+            <p className="mt-1">or: <span className="text-purple-400">Build a landing page for SaaS product</span></p>
+          </div>
         </div>
 
         {/* Feature Cards */}
         <div id="features" className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Neural AI Architecture */}
+          {/* Website Cloning */}
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative bg-[#141829] border border-blue-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-blue-500/40 transition-all">
@@ -209,20 +202,20 @@ export default function HomePage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-center text-blue-200">
-                Neural AI Architecture
+                Instant Website Cloning
               </h3>
               <p className="text-gray-400 text-center text-sm leading-relaxed">
-                Build advanced AI systems with quantum-enhanced neural networks and distributed computing frameworks
+                Clone any website in seconds with AI-powered scraping and intelligent code generation
               </p>
             </div>
           </div>
 
-          {/* Real-Time Analytics */}
+          {/* AI Code Generation */}
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative bg-[#141829] border border-blue-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-blue-500/40 transition-all">
@@ -237,20 +230,20 @@ export default function HomePage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-center text-blue-200">
-                Real-Time Analytics
+                AI Code Generation
               </h3>
               <p className="text-gray-400 text-center text-sm leading-relaxed">
-                Monitor, analyze, and optimize your AI models with live performance insights and predictive analytics
+                Generate production-ready React code from simple prompts with context-aware AI assistance
               </p>
             </div>
           </div>
 
-          {/* Quantum Deployment */}
+          {/* Live Preview */}
           <div className="group relative">
             <div className="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative bg-[#141829] border border-blue-500/20 rounded-2xl p-8 backdrop-blur-sm hover:border-blue-500/40 transition-all">
@@ -265,15 +258,21 @@ export default function HomePage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={1.5}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-center text-blue-200">
-                Quantum Deployment
+                Live Sandbox Preview
               </h3>
               <p className="text-gray-400 text-center text-sm leading-relaxed">
-                Deploy production-ready AI solutions with zero-downtime infrastructure and infinite scalability
+                See your changes instantly with hot-reload sandboxes powered by E2B and Vercel
               </p>
             </div>
           </div>
