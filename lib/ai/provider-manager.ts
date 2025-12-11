@@ -4,7 +4,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
-type ProviderName = 'openai' | 'anthropic' | 'groq' | 'google';
+type ProviderName = 'openai' | 'anthropic' | 'groq' | 'google' | 'openrouter';
 
 // Client function type returned by @ai-sdk providers
 export type ProviderClient =
@@ -18,14 +18,20 @@ export interface ProviderResolution {
   actualModel: string;
 }
 
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 const aiGatewayApiKey = process.env.AI_GATEWAY_API_KEY;
 const aiGatewayBaseURL = 'https://ai-gateway.vercel.sh/v1';
-const isUsingAIGateway = !!aiGatewayApiKey;
+const isUsingOpenRouter = !!openRouterApiKey;
+const isUsingAIGateway = !!aiGatewayApiKey && !isUsingOpenRouter;
 
 // Cache provider clients by a stable key to avoid recreating
 const clientCache = new Map<string, ProviderClient>();
 
 function getEnvDefaults(provider: ProviderName): { apiKey?: string; baseURL?: string } {
+  if (isUsingOpenRouter) {
+    return { apiKey: openRouterApiKey, baseURL: 'https://openrouter.ai/api/v1' };
+  }
+
   if (isUsingAIGateway) {
     return { apiKey: aiGatewayApiKey, baseURL: aiGatewayBaseURL };
   }
@@ -34,19 +40,22 @@ function getEnvDefaults(provider: ProviderName): { apiKey?: string; baseURL?: st
     case 'openai':
       return { apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL };
     case 'anthropic':
-      // Default Anthropic base URL mirrors existing routes
       return { apiKey: process.env.ANTHROPIC_API_KEY, baseURL: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com/v1' };
     case 'groq':
       return { apiKey: process.env.GROQ_API_KEY, baseURL: process.env.GROQ_BASE_URL };
     case 'google':
       return { apiKey: process.env.GEMINI_API_KEY, baseURL: process.env.GEMINI_BASE_URL };
+    case 'openrouter':
+      return { apiKey: openRouterApiKey, baseURL: 'https://openrouter.ai/api/v1' };
     default:
       return {};
   }
 }
 
 function getOrCreateClient(provider: ProviderName, apiKey?: string, baseURL?: string): ProviderClient {
-  const effective = isUsingAIGateway
+  const effective = isUsingOpenRouter
+    ? { apiKey: openRouterApiKey, baseURL: 'https://openrouter.ai/api/v1' }
+    : isUsingAIGateway
     ? { apiKey: aiGatewayApiKey, baseURL: aiGatewayBaseURL }
     : { apiKey, baseURL };
 
@@ -68,6 +77,9 @@ function getOrCreateClient(provider: ProviderName, apiKey?: string, baseURL?: st
     case 'google':
       client = createGoogleGenerativeAI({ apiKey: effective.apiKey || getEnvDefaults('google').apiKey, baseURL: effective.baseURL ?? getEnvDefaults('google').baseURL });
       break;
+    case 'openrouter':
+      client = createOpenAI({ apiKey: effective.apiKey || getEnvDefaults('openrouter').apiKey, baseURL: effective.baseURL ?? getEnvDefaults('openrouter').baseURL });
+      break;
     default:
       client = createGroq({ apiKey: effective.apiKey || getEnvDefaults('groq').apiKey, baseURL: effective.baseURL ?? getEnvDefaults('groq').baseURL });
   }
@@ -77,6 +89,12 @@ function getOrCreateClient(provider: ProviderName, apiKey?: string, baseURL?: st
 }
 
 export function getProviderForModel(modelId: string): ProviderResolution {
+  // If using OpenRouter, route all models through it
+  if (isUsingOpenRouter) {
+    const client = getOrCreateClient('openrouter');
+    return { client, actualModel: modelId };
+  }
+
   // 1) Check explicit model configuration in app config (custom models)
   const configured = appConfig.ai.modelApiConfig?.[modelId as keyof typeof appConfig.ai.modelApiConfig];
   if (configured) {
