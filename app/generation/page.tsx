@@ -25,6 +25,7 @@ import {
 } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
+import ModelSelector from '@/components/ModelSelector';
 
 interface SandboxData {
   sandboxId: string;
@@ -3285,10 +3286,9 @@ Focus on the key sections and content, making it clean and modern.`;
         <HeaderBrandKit />
         <div className="flex items-center gap-2">
           {/* Model Selector - Left side */}
-          <select
+          <ModelSelector
             value={aiModel}
-            onChange={(e) => {
-              const newModel = e.target.value;
+            onChange={(newModel) => {
               setAiModel(newModel);
               const params = new URLSearchParams(searchParams);
               params.set('model', newModel);
@@ -3297,14 +3297,10 @@ Focus on the key sections and content, making it clean and modern.`;
               }
               router.push(`/generation?${params.toString()}`);
             }}
-            className="px-3 py-1.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 transition-colors"
-          >
-            {appConfig.ai.availableModels.map(model => (
-              <option key={model} value={model}>
-                {appConfig.ai.modelDisplayNames?.[model] || model}
-              </option>
-            ))}
-          </select>
+            fallbackModels={appConfig.ai.availableModels}
+            fallbackDisplayNames={appConfig.ai.modelDisplayNames}
+            disabled={loading || generationProgress.isGenerating}
+          />
           <button 
             onClick={() => createSandbox()}
             className="p-8 rounded-lg transition-colors bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"

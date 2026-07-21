@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { appConfig } from "@/config/app.config";
+import ModelSelector from "@/components/ModelSelector";
 
 interface SidebarInputProps {
   onSubmit: (url: string, style: string, model: string, instructions?: string) => void;
@@ -34,10 +35,8 @@ export default function SidebarInput({ onSubmit, disabled = false }: SidebarInpu
     { id: "8", name: "Retro Wave", description: "80s inspired" },
   ];
 
-  const models = appConfig.ai.availableModels.map(model => ({
-    id: model,
-    name: appConfig.ai.modelDisplayNames[model] || model,
-  }));
+
+
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -93,18 +92,13 @@ export default function SidebarInput({ onSubmit, disabled = false }: SidebarInpu
             {/* Model Selector */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">AI Model</label>
-              <select
+              <ModelSelector
                 value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+                onChange={setSelectedModel}
                 disabled={disabled}
-                className="w-full px-3 py-2 text-xs font-medium text-gray-700 bg-white rounded border border-gray-200 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
-              >
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name}
-                  </option>
-                ))}
-              </select>
+                fallbackModels={appConfig.ai.availableModels}
+                fallbackDisplayNames={appConfig.ai.modelDisplayNames}
+              />
             </div>
 
             {/* Additional Instructions */}
